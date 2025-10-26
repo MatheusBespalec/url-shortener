@@ -88,4 +88,34 @@ class ShortUrlControllerTest extends TestCase
             'original_url' => $originalUrl,
         ]);
     }
+
+    public function test_index_should_list_short_urls()
+    {
+        ShortUrl::factory()->count(10)->create();
+        $response = $this->get('/api/urls');
+        $response->assertOk();
+        $this->assertEquals(10, $response->json('meta.total'));
+    }
+
+    public function test_index_should_filter_by_original_url_when_filter_is_present()
+    {
+        ShortUrl::factory()->count(10)->create();
+        $originalUrl = 'http://google.com';
+        ShortUrl::factory()->create([
+            'original_url' => $originalUrl,
+        ]);
+        $response = $this->get('/api/urls?original_url=' . urlencode($originalUrl));
+        $response->assertOk();
+        $this->assertEquals(1, $response->json('meta.total'));
+        $this->assertEquals($originalUrl, $response->json('data.0.original_url'));
+    }
+
+    public function test_index_should_paginate_results_when_pagination_params_is_present()
+    {
+        ShortUrl::factory()->count(9)->create();
+        $response = $this->get('/api/urls?per_page=5&page=2');
+        $response->assertOk();
+        $this->assertEquals(9, $response->json('meta.total'));
+        $this->assertCount(4, $response->json('data'));
+    }
 }

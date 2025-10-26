@@ -9,12 +9,17 @@ use App\Models\ShortUrl;
 use App\UseCases\ShortUrls\CreateShortUrlUseCase;
 use App\UseCases\ShortUrls\DTO\CreateShortUrlDTO;
 use App\UseCases\ShortUrls\GetOriginalUrlUseCase;
+use Illuminate\Http\Request;
 
 class ShortUrlController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return ShortUrlResource::collection(ShortUrl::paginate());
+        $query = ShortUrl::query();
+        if ($request->query('original_url')) {
+            $query->whereLike('original_url', '%' . $request->query('original_url') . '%');
+        }
+        return ShortUrlResource::collection($query->paginate($request->query('per_page')));
     }
 
     public function store(CreateShortUrlDTO $data, CreateShortUrlUseCase $useCase)
