@@ -7,6 +7,11 @@ use App\Models\ShortUrl;
 
 class GetOriginalUrlUseCase
 {
+    /**
+     * @param string $code
+     * @return string
+     * @throws RedirectTargetNotFoundException
+     */
     public function execute(string $code): string
     {
         $shortUrl = ShortUrl::where('code', $code)->first();

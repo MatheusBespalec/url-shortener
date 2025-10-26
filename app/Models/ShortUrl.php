@@ -14,4 +14,8 @@ class ShortUrl extends Model
         'original_url',
         'clicks'
     ];
+
+    protected $casts = [
+        'clicks' => 'int'
+    ];
 }

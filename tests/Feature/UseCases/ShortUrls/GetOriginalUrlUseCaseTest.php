@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\UseCases\ShortUrls;
+namespace Feature\UseCases\ShortUrls;
 
 use App\Exceptions\RedirectTargetNotFoundException;
 use App\Models\ShortUrl;

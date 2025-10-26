@@ -2,7 +2,7 @@
 
 namespace App\Exceptions;
 
-class RedirectTargetNotFoundException extends \Exception
+class RedirectTargetNotFoundException extends \DomainException
 {
 
 }
