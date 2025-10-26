@@ -1,0 +1,80 @@
+openapi: 3.1.0
+info:
+  title: Url Shortner
+  description: Url Shortner
+  version: 1.0.0
+servers:
+  - url: 'http://localhost'
+    description: Local development server
+paths:
+  /api/urls:
+    get:
+      summary: List Short URL's
+      tags:
+        - Short Url
+      responses:
+        '200':
+          description: List of short url resources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: '#/components/schemas/ShortUrlResource'
+    post:
+      tags:
+        - Short Url
+      summary: Create Short URL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                original_url:
+                  type: string
+                  example: "https://google.com"
+      responses:
+        '200':
+          description: Short Url resource
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ShortUrlResource'
+                example:
+                  original_url: "https://google.com"
+                  short_url: "http://localhost/s/abc123"
+                  clicks: 0
+  /s/{code}:
+    get:
+      summary: Redirect to original url
+      parameters:
+        - in: path
+          name: code
+          required: true
+          description: Short URL code
+          schema:
+            type: string
+      tags:
+        - Short Url
+      description: Create short url
+      responses:
+        '301':
+          description: Redirect to original URL
+
+components:
+  schemas:
+    ShortUrlResource:
+      type: object
+      properties:
+        original_url:
+          type: string
+          example: "https://google.com"
+        short_url:
+          type: string
+          example: "http://localhost/s/abc123"
+        clicks:
+          type: integer
+          example: 123
