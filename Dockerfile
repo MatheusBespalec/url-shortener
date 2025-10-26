@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . /app
 
-RUN composer install --ignore-platform-reqs
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 FROM node AS node-build
 
@@ -23,7 +23,7 @@ COPY . /app
 COPY .docker/php/php.ini /usr/local/etc/php/php.ini
 COPY .docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --from=php-build /app/vendor /app/vendor
-COPY --from=node-build /app/node_modules /app/node_modules
+COPY --from=node-build /app/public/build /app/public/build
 
 RUN apk add --no-cache mysql-client \
     && docker-php-ext-install pdo_mysql \
