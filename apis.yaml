@@ -1,55 +1,167 @@
 openapi: 3.1.0
 info:
-  title: Url Shortner
-  description: Url Shortner
+  title: URL Shortener API
+  description: Simple API to create short URLs and redirect to their original destinations.
   version: 1.0.0
 servers:
-  - url: 'http://localhost'
+  - url: http://localhost
     description: Local development server
+
+tags:
+  - name: Short URLs
+    description: Operations for creating and listing short URLs
+
 paths:
   /api/urls:
     get:
-      summary: List Short URL's
-      tags:
-        - Short Url
+      summary: List short URLs
+      description: |
+        Returns a paginated list of short URL resources.
+        Results are wrapped in a `{ data, links, meta }` envelope, where `data` is an array of `ShortUrlResource`.
+      operationId: listShortUrls
+      tags: [Short URLs]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
       responses:
         '200':
-          description: List of short url resources
+          description: Paginated list of short URLs
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  $ref: '#/components/schemas/ShortUrlResource'
+                $ref: '#/components/schemas/PaginatedShortUrlResponse'
+              examples:
+                empty:
+                  summary: Empty first page
+                  value:
+                    data: []
+                    links:
+                      first: "http://localhost/api/urls?page=1"
+                      last: "http://localhost/api/urls?page=1"
+                      prev: null
+                      next: null
+                    meta:
+                      current_page: 1
+                      from: null
+                      last_page: 1
+                      links:
+                        - url: null
+                          label: "&laquo; Previous"
+                          page: null
+                          active: false
+                        - url: "http://localhost/api/urls?page=1"
+                          label: "1"
+                          page: 1
+                          active: true
+                        - url: null
+                          label: "Next &raquo;"
+                          page: null
+                          active: false
+                      path: "http://localhost/api/urls"
+                      per_page: 15
+                      to: null
+                      total: 0
+                populated:
+                  summary: Example with items
+                  value:
+                    data:
+                      - original_url: "https://google.com"
+                        short_url: "http://localhost/s/abc123"
+                        clicks: 123
+                    links:
+                      first: "http://localhost/api/urls?page=1"
+                      last: "http://localhost/api/urls?page=3"
+                      prev: null
+                      next: "http://localhost/api/urls?page=2"
+                    meta:
+                      current_page: 1
+                      from: 1
+                      last_page: 3
+                      links:
+                        - url: null
+                          label: "&laquo; Previous"
+                          page: null
+                          active: false
+                        - url: "http://localhost/api/urls?page=1"
+                          label: "1"
+                          page: 1
+                          active: true
+                        - url: "http://localhost/api/urls?page=2"
+                          label: "2"
+                          page: 2
+                          active: false
+                        - url: "http://localhost/api/urls?page=3"
+                          label: "3"
+                          page: 3
+                          active: false
+                        - url: "http://localhost/api/urls?page=2"
+                          label: "Next &raquo;"
+                          page: 2
+                          active: false
+                      path: "http://localhost/api/urls"
+                      per_page: 15
+                      to: 15
+                      total: 31
+        '400':
+          description: Invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
     post:
-      tags:
-        - Short Url
-      summary: Create Short URL
+      summary: Create short URL
+      description: Creates a new short URL for the given `original_url`.
+      operationId: createShortUrl
+      tags: [Short URLs]
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                original_url:
-                  type: string
-                  example: "https://google.com"
+              $ref: '#/components/schemas/CreateShortUrlRequest'
+            examples:
+              basic:
+                value:
+                  original_url: "https://google.com"
       responses:
-        '200':
-          description: Short Url resource
+        '201':
+          description: Short URL created
+          headers:
+            Location:
+              description: URL of the newly created short link (i.e., the public redirect URL).
+              schema:
+                type: string
+                format: uri
           content:
             application/json:
               schema:
-                type: object
                 $ref: '#/components/schemas/ShortUrlResource'
-                example:
-                  original_url: "https://google.com"
-                  short_url: "http://localhost/s/abc123"
-                  clicks: 0
+              examples:
+                created:
+                  value:
+                    original_url: "https://google.com"
+                    short_url: "http://localhost/s/abc123"
+                    clicks: 0
+        '400':
+          description: Malformed request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation error (e.g., invalid URL)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
   /s/{code}:
     get:
-      summary: Redirect to original url
+      summary: Redirect to original URL
+      description: Redirects to the original URL for the given short code.
+      operationId: redirectShortUrl
+      tags: [Short URLs]
       parameters:
         - in: path
           name: code
@@ -57,24 +169,198 @@ paths:
           description: Short URL code
           schema:
             type: string
-      tags:
-        - Short Url
-      description: Create short url
       responses:
         '301':
-          description: Redirect to original URL
+          description: Permanent redirect to original URL
+          headers:
+            Location:
+              description: Destination URL for the redirect
+              schema:
+                type: string
+                format: uri
+        '404':
+          description: Short code not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
+  parameters:
+    Page:
+      in: query
+      name: page
+      description: Page number (1-based)
+      schema:
+        type: integer
+        minimum: 1
+      example: 1
+    PerPage:
+      in: query
+      name: per_page
+      description: Items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+      example: 15
+
   schemas:
-    ShortUrlResource:
+    CreateShortUrlRequest:
       type: object
+      required: [original_url]
       properties:
         original_url:
           type: string
+          format: uri
+          description: The destination URL to shorten
+          example: "https://google.com"
+
+    ShortUrlResource:
+      type: object
+      required: [original_url, short_url, clicks]
+      properties:
+        original_url:
+          type: string
+          format: uri
           example: "https://google.com"
         short_url:
           type: string
+          format: uri
           example: "http://localhost/s/abc123"
         clicks:
           type: integer
+          minimum: 0
           example: 123
+
+    PaginatedShortUrlResponse:
+      type: object
+      required: [data, links, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShortUrlResource'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginationLinks:
+      type: object
+      properties:
+        first:
+          type: [string, "null"]
+          format: uri
+          nullable: true
+        last:
+          type: [string, "null"]
+          format: uri
+          nullable: true
+        prev:
+          type: [string, "null"]
+          format: uri
+          nullable: true
+        next:
+          type: [string, "null"]
+          format: uri
+          nullable: true
+      example:
+        first: "http://localhost/api/urls?page=1"
+        last: "http://localhost/api/urls?page=3"
+        prev: null
+        next: "http://localhost/api/urls?page=2"
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        from:
+          type: [integer, "null"]
+          nullable: true
+        last_page:
+          type: integer
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaginationMetaLink'
+        path:
+          type: string
+          format: uri
+        per_page:
+          type: integer
+        to:
+          type: [integer, "null"]
+          nullable: true
+        total:
+          type: integer
+      example:
+        current_page: 1
+        from: 1
+        last_page: 3
+        links:
+          - url: null
+            label: "&laquo; Previous"
+            page: null
+            active: false
+          - url: "http://localhost/api/urls?page=1"
+            label: "1"
+            page: 1
+            active: true
+          - url: "http://localhost/api/urls?page=2"
+            label: "2"
+            page: 2
+            active: false
+          - url: "http://localhost/api/urls?page=3"
+            label: "3"
+            page: 3
+            active: false
+          - url: "http://localhost/api/urls?page=2"
+            label: "Next &raquo;"
+            page: 2
+            active: false
+        path: "http://localhost/api/urls"
+        per_page: 15
+        to: 15
+        total: 31
+
+    PaginationMetaLink:
+      type: object
+      properties:
+        url:
+          type: [string, "null"]
+          format: uri
+          nullable: true
+        label:
+          type: string
+        page:
+          type: [integer, "null"]
+          nullable: true
+        active:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+      example:
+        message: "Not found"
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      example:
+        message: "The given data was invalid."
+        errors:
+          original_url:
+            - "The original_url field must be a valid URL."
