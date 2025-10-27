@@ -3,6 +3,10 @@ set -e
 
 cp .env.example .env
 
+while ! php artisan db:show >/dev/null 2>&1; do
+    sleep 2
+done
+
 php artisan migrate --force --seed
 
 php artisan key:generate
