@@ -19,20 +19,15 @@ FROM php:8.4-fpm-alpine
 
 WORKDIR /app
 
-COPY . /app
-COPY .docker/php/php.ini /usr/local/etc/php/php.ini
-COPY .docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY .docker/php/laravel-worker.conf /etc/supervisor/conf.d/laravel-worker.conf
-COPY --from=php-build /app/vendor /app/vendor
-COPY --from=node-build /app/public/build /app/public/build
+COPY --chown=www-data:www-data . /app
+COPY --chown=www-data:www-data .docker/php/php.ini /usr/local/etc/php/php.ini
+COPY --chown=www-data:www-data .docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chown=www-data:www-data --from=php-build /app/vendor /app/vendor
+COPY --chown=www-data:www-data --from=node-build /app/public/build /app/public/build
 
 RUN apk update  \
     && apk add --no-cache mysql-client \
-    && apk add --no-cache supervisor \
     && docker-php-ext-install pdo_mysql \
-    && cp .env.example .env \
-    && php artisan key:generate \
-    && php artisan optimize \
     && chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 9000

@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
+        User::create([
             'name' => 'Beepay Admin',
             'email' => 'admin@beepayapp.com.br',
             'password' => Hash::make('admin123456'),
