@@ -33,6 +33,23 @@ class ShortUrlControllerTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_redirect_has_a_rate_limit_of_60_requests_per_minute()
+    {
+        $code = 'abc123';
+        $originalUrl = 'https://google.com';
+        ShortUrl::create([
+            'code' => $code,
+            'original_url' => $originalUrl,
+        ]);
+        $route = "/s/$code";
+
+        for ($i = 0; $i < 60; $i++) {
+            $this->getJson($route)->assertRedirect($originalUrl);
+        }
+
+        $this->getJson($route)->assertStatus(429);
+    }
+
     public function test_store_should_create_short_link_and_return_resource_when_original_url_is_valid()
     {
         $originalUrl = 'http://google.com';
@@ -63,6 +80,22 @@ class ShortUrlControllerTest extends TestCase
         ]);
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors('original_url');
+    }
+
+    public function test_store_has_a_rate_limit_of_60_requests_per_minute()
+    {
+        $route = '/api/urls';
+
+        for ($i = 0; $i < 60; $i++) {
+            $shortUrl = ShortUrl::factory()->make();
+            $this->postJson($route, [
+                'original_url' => $shortUrl->original_url,
+            ])->assertCreated();        }
+
+        $shortUrl = ShortUrl::factory()->make();
+        $this->postJson($route, [
+            'original_url' => $shortUrl->original_url,
+        ])->assertStatus(429);
     }
 
     public static function invalidUrlProvider(): array
@@ -117,5 +150,16 @@ class ShortUrlControllerTest extends TestCase
         $response->assertOk();
         $this->assertEquals(9, $response->json('meta.total'));
         $this->assertCount(4, $response->json('data'));
+    }
+
+    public function test_index_has_a_rate_limit_of_60_requests_per_minute()
+    {
+        $route = '/api/urls';
+
+        for ($i = 0; $i < 60; $i++) {
+            $this->getJson($route)->assertOk(200);
+        }
+
+        $this->getJson($route)->assertStatus(429);
     }
 }
