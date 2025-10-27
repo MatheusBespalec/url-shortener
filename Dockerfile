@@ -22,10 +22,13 @@ WORKDIR /app
 COPY . /app
 COPY .docker/php/php.ini /usr/local/etc/php/php.ini
 COPY .docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY .docker/php/laravel-worker.conf /etc/supervisor/conf.d/laravel-worker.conf
 COPY --from=php-build /app/vendor /app/vendor
 COPY --from=node-build /app/public/build /app/public/build
 
-RUN apk add --no-cache mysql-client \
+RUN apk update  \
+    && apk add --no-cache mysql-client \
+    && apk add --no-cache supervisor \
     && docker-php-ext-install pdo_mysql \
     && cp .env.example .env \
     && php artisan key:generate \
