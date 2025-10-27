@@ -16,7 +16,7 @@
             @forelse($shortUrls as $shortUrl)
                 <tr class="p-8">
                     <td>{{ $shortUrl->original_url }}</td>
-                    <td>{{ url($shortUrl->code) }}</td>
+                    <td>{{ url('/s/' . $shortUrl->code) }}</td>
                     <td>{{ $shortUrl->clicks }}</td>
                 </tr>
             @empty

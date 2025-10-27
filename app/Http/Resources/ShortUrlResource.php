@@ -16,7 +16,7 @@ class ShortUrlResource extends JsonResource
     {
         return [
             'original_url' => $this->original_url,
-            'short_url' => url($this->code),
+            'short_url' => url('/s/' . $this->code),
             'clicks' => $this->clicks,
         ];
     }
