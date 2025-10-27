@@ -1,0 +1,26 @@
+# Git files
+.git
+.gitignore
+
+# IDE files
+.idea
+.vscode
+
+# Development files
+node_modules
+vendor
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+public/hot
+storage/*.key
+
+# Testing
+tests
+phpunit.xml
+
+# Documentation
+*.md
+!README.md

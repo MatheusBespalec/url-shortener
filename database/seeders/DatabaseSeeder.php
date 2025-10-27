@@ -14,10 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
+        User::upsert([
             'name' => 'Beepay Admin',
             'email' => 'admin@beepayapp.com.br',
             'password' => Hash::make('admin123456'),
-        ]);
+        ], ['email']);
     }
 }
