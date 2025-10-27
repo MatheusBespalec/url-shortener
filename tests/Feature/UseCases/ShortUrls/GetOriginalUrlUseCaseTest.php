@@ -2,12 +2,16 @@
 
 namespace Feature\UseCases\ShortUrls;
 
+use App\Events\ShortUrlAccessed;
 use App\Exceptions\RedirectTargetNotFoundException;
 use App\Models\ShortUrl;
 use App\UseCases\ShortUrls\GetOriginalUrlUseCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(GetOriginalUrlUseCase::class)]
 class GetOriginalUrlUseCaseTest extends TestCase
 {
     use RefreshDatabase;
@@ -22,6 +26,7 @@ class GetOriginalUrlUseCaseTest extends TestCase
 
     public function test_should_return_original_url_when_short_url_exists()
     {
+        Event::fake();
         $code = 'abc123';
         $originalUrl = 'https://google.com';
 
@@ -33,6 +38,7 @@ class GetOriginalUrlUseCaseTest extends TestCase
         $output = $this->useCase->execute($code);
 
         $this->assertSame($originalUrl, $output);
+        Event::assertDispatched(ShortUrlAccessed::class);
     }
 
     public function test_should_throws_RedirectTargetNotFoundException_when_short_url_does_not_exists()

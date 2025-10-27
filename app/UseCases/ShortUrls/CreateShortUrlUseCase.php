@@ -28,7 +28,6 @@ class CreateShortUrlUseCase
                 $retries++;
             }
         } while ($retries < 5);
-        Log::error('Failed to create short url. Max of 5 retries exceeded.');
         throw new \Exception('Failed to create short url. Max of 5 retries exceeded.');
     }
 }

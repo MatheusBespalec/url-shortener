@@ -8,10 +8,12 @@ use App\UseCases\ShortUrls\CreateShortUrlUseCase;
 use App\UseCases\ShortUrls\DTO\CreateShortUrlDTO;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use Tests\TestCase;
 
+#[CoversClass(CreateShortUrlUseCase::class)]
 class CreateShortUrlUseCaseTest extends TestCase
 {
     use RefreshDatabase;
@@ -74,6 +76,18 @@ class CreateShortUrlUseCaseTest extends TestCase
             'original_url' => $originalUrl2,
             'code' => $code2,
         ]);
+    }
+
+    public function test_should_regenerate_code_with_five_retries_and_fail_when_keep_duplicated_on_database()
+    {
+        $this->expectException(\Exception::class);
+        $code1 = 'abc123';
+        $originalUrl1 = 'https://google.com';
+        $originalUrl2 = 'https://test.com';
+        $this->urlEncoder->expects($this->exactly(6))->method('encode')->willReturn($code1);
+
+        $this->useCase->execute(new CreateShortUrlDTO($originalUrl1));
+        $this->useCase->execute(new CreateShortUrlDTO($originalUrl2));
     }
 
     public static function invalidUrlProvider(): array
